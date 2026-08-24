@@ -150,7 +150,7 @@ async function performRestart() {
     console.error(`Automation Error: ${error.message}`);
   } finally {
     await browser.close();
-    log('Browser safely closed. Standing by for the next scheduled run...');
+    log('Browser safely closed.');
   }
 }
 
@@ -172,9 +172,25 @@ cron.schedule('30 6 * * *', async () => {
   timezone: "Asia/Kolkata" 
 });
 
-// --- IMMEDIATE TEST RUN ---
-log('Triggering an immediate test run right now upon boot...');
-performRestart();
+// --- IMMEDIATE TEST RUNS (RUN 1, THEN RUN 2) ---
+(async () => {
+  log('==================================================');
+  log('>>> STARTING TEST RUN 1 OF 2 UPON BOOT <<<');
+  log('==================================================');
+  await performRestart();
+
+  log('Waiting 15 seconds before launching the second test run...');
+  await randomSleep(15000, 20000);
+
+  log('==================================================');
+  log('>>> STARTING TEST RUN 2 OF 2 UPON BOOT <<<');
+  log('==================================================');
+  await performRestart();
+
+  log('==================================================');
+  log('Both test runs finished! Standing by for scheduled daily cron runs...');
+  log('==================================================');
+})();
 
 EOF
 
