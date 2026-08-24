@@ -64,6 +64,9 @@ async function performRestart() {
   try {
     log('Navigating directly to server dashboard...');
     await page.goto('https://aternos.org/server/', { waitUntil: 'domcontentloaded', timeout: 45000 });
+    
+    // Wait for Aternos dynamic status DOM elements to render before reading
+    await page.waitForSelector('.status-label-body, .server-status-label, .status', { timeout: 15000 }).catch(() => {});
     await randomSleep(2000, 4000);
 
     if (page.url().includes('/go')) {
@@ -150,7 +153,7 @@ async function performRestart() {
     console.error(`Automation Error: ${error.message}`);
   } finally {
     await browser.close();
-    log('Browser safely closed. Standing by for the next scheduled run...');
+    log('Browser safely closed. Standing by for the next run...');
   }
 }
 
@@ -172,9 +175,25 @@ cron.schedule('30 6 * * *', async () => {
   timezone: "Asia/Kolkata" 
 });
 
-// --- IMMEDIATE TEST RUN ---
-log('Triggering an immediate test run right now upon boot...');
-performRestart();
+// --- TWO IMMEDIATE TEST RUNS UPON BOOT ---
+(async () => {
+  log('==================================================');
+  log('>>> STARTING TEST RUN 1 OF 2 UPON BOOT <<<');
+  log('==================================================');
+  await performRestart();
+
+  log('Waiting 30 seconds for server state to settle before Test Run 2...');
+  await randomSleep(30000, 30000);
+
+  log('==================================================');
+  log('>>> STARTING TEST RUN 2 OF 2 UPON BOOT <<<');
+  log('==================================================');
+  await performRestart();
+
+  log('==================================================');
+  log('Both test runs finished! Standing by for scheduled daily cron runs...');
+  log('==================================================');
+})();
 
 EOF
 
